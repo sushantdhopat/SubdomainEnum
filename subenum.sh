@@ -1,6 +1,6 @@
 #!/bin/bash
 #Author: sushant dhopat
-#Basic subdomaain enum tool
+#Basic subdomain enum tool
 
 echo -e "\e[1;32m
 $(figlet Sushant Dhopat)
