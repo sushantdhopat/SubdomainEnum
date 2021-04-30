@@ -8,3 +8,4 @@ Tools :-
 * Amass
 * Subfinder (with using all API keys)
 * sudomainizer
+* httpx (for finding valid subdomain)
