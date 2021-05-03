@@ -8,6 +8,7 @@ Tools :-
 * Amass
 * Subfinder (with using all API keys)
 * sudomainizer
+* goaltdns
 * httpx (for finding valid subdomain)
 * All nuclei-templates
 * dirsearch
