@@ -29,11 +29,13 @@ echo -e "\e[1;34m [+] Enumerating Subdomain from the sudomainizer \e[0m"
 python3 ~/SubDomainizer/SubDomainizer.py -u https://www.$target -o new-$target/$target-subdomainizer.txt
 #copy above all different files finded subdomain in one spefic file
 cat new-$target/*.txt > new-$target/all-$target.txt
+cat new-$target/all-$target.txt | sort -u | tee new-$target/alls-$target.txt
+rm new-$target/all-$target.txt
 rm new-$target/$target-assetfinder.txt new-$target/$target-subfinder.txt new-$target/$target-amass.txt new-$target/$target-subdomainizer.txt
 echo -e "\e[1;34m [+] Enumerating permuted subdomains from the goaltdns \e[0m"
-cat new-$target/all-$target.txt | goaltdns -w $wordlist | tee new-$target/permutedsub.txt
+cat new-$target/alls-$target.txt | goaltdns -w $wordlist | tee new-$target/permutedsub.txt
 cat new-$target/*.txt > new-$target/allsub-$target.txt
-rm new-$target/all-$target.txt new-$target/permutedsub.txt
+rm new-$target/alls-$target.txt new-$target/permutedsub.txt
 
 #sorting the uniq domains 
 cat new-$target/allsub-$target.txt | sort -u | tee new-$target/allsortedsub-$target.txt
