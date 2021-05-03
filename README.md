@@ -1,6 +1,6 @@
 # SubdomainEnum
 
-Simple bash script for enumerate subdomain with ussing different tools
+Simple bash script for recon
 
 Tools :-
 
