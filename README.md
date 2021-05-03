@@ -13,7 +13,7 @@ Tools :-
 * All nuclei-templates
 * dirsearch
 
-## How to use 👎
+## How to use :-
 
 bash subenum.sh target.com
 
