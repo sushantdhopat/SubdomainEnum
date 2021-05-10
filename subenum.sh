@@ -3,16 +3,6 @@
 #Basic recon tool
 
 echo -e "\e[1;32m
-$(figlet SubdomainEnum)
-\e[0m "
-echo " "
-echo -e "\e[1;32m        Read about at https://github.com/sushantdhopat\e[0m"
-echo -e "\e[1;32m                       By: Sushant Dhopat
-                  Github: https://github.com/sushantdhopat       \e[0m"
-echo " "
-echo -e "\e[1;32m Run this script as root \e[0m"
-echo -e "\e[1;32m <------------------------------------------------------------------------>\e[0m"
-
 target=$1
 mkdir new-$target
 
