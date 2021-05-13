@@ -1,4 +1,4 @@
-!/bin/bash
+#! /bin/bash
 #Author: sushant dhopat
 #Basic recon tool
 
