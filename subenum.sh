@@ -2,7 +2,7 @@
 #Author: sushant dhopat
 #Basic recon tool
 
-echo -e "\e[1;32m
+echo -e "\e[1;32m "
 resolver=/home/sushant/subbrute/resolvers.txt
 target=$1
 mkdir new-$target
