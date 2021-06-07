@@ -47,7 +47,7 @@ cat new-$target/allsortedsub-$target.txt | grep -Po '(\w+\.\w+\.\w+)$' | sort -u
 
 echo "Gathering sull third level subdomain throw sublist3r"
 
-for domain in $(cat new-$target/thirdlevel.txt); do sublist3r -d $domain -o new-$target/thirdlevel/$domain.txt | sort -u >> new-$target/final.txt;done
+for domain in $(cat new-$target/thirdlevel.txt); do sublist3r -d $domain -o new-$target/$domain.txt | sort -u >> new-$target/final.txt;done
 rm new-$target/thirdlevel.txt
 
 echo -e "\e[1;34m [+] Enumerating Subdomain from the subbrute \e[0m"
