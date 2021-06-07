@@ -42,18 +42,18 @@ cat new-$target/allsub-$target.txt | sort -u | tee new-$target/allsortedsub-$tar
 rm new-$target/allsub-$target.txt
 
 #gathering third level domain
-echo -e "\e[1;34m [+] compiling third level subdomain \e[0m"
-cat new-$target/allsortedsub-$target.txt | grep -Po '(\w+\.\w+\.\w+)$' | sort -u >> new-$target/thirdlevel.txt
+#echo -e "\e[1;34m [+] compiling third level subdomain \e[0m"
+#cat new-$target/allsortedsub-$target.txt | grep -Po '(\w+\.\w+\.\w+)$' | sort -u >> new-$target/thirdlevel.txt
 
-echo -e "\e[1;34m [+] Gathering all thirdlevel subdomain throw sublist3r \e[0m"
+#echo -e "\e[1;34m [+] Gathering all thirdlevel subdomain throw sublist3r \e[0m"
 
-for domain in $(cat new-$target/thirdlevel.txt); do sublist3r -d $domain -o new-$target/$domain.txt | sort -u >> new-$target/final.txt;done
-rm new-$target/thirdlevel.txt
+#for domain in $(cat new-$target/thirdlevel.txt); do sublist3r -d $domain -o new-$target/$domain.txt | sort -u >> new-$target/final.txt;done
+#rm new-$target/thirdlevel.txt
 
 echo -e "\e[1;34m [+] Enumerating Subdomain from the subbrute \e[0m"
 python /home/sushant/subbrute/subbrute.py $target -s new-$target/allsortedsub-$target.txt -r $resolver -o new-$target/$target-subbrute.txt
 cat new-$target/*.txt > new-$target/allsubdomains.txt
-rm new-$target/allsortedsub-$target.txt new-$target/$target-subbrute.txt new-$target/final.txt
+rm new-$target/allsortedsub-$target.txt new-$target/$target-subbrute.txt
 cat new-$target/allsubdomains.txt | grep $target | sort -u | tee new-$target/new-allsub-$target.txt
 rm new-$target/allsubdomains.txt
 
