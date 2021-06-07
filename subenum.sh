@@ -3,6 +3,7 @@
 #Basic recon tool
 
 echo -e "\e[1;32m "
+#Need resolvers you can get from amass you can also generate with shuffledns store them in specifc directory and add this directory path in resolver variable
 resolver=/home/sushant/subbrute/resolvers.txt
 target=$1
 
