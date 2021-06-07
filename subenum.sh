@@ -45,7 +45,7 @@ rm new-$target/allsub-$target.txt
 echo "compiling third level subdomain"
 cat new-$target/allsortedsub-$target.txt | grep -Po '(\w+\.\w+\.\w+)$' | sort -u >> new-$target/thirdlevel.txt
 
-echo "Gathering sull third level subdomain throw sublist3r"
+echo -e "\e[1;34m [+] Gathering all thirdlevel subdomain throw sublist3r \e[0m"
 
 for domain in $(cat new-$target/thirdlevel.txt); do sublist3r -d $domain -o new-$target/$domain.txt | sort -u >> new-$target/final.txt;done
 rm new-$target/thirdlevel.txt
