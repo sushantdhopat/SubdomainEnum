@@ -1,6 +1,13 @@
 #! /bin/bash
 #Author: sushant dhopat
 #Basic recon tool
+#Tools:-
+#Assetfinder 
+#subfinder
+#amass
+#sublist3r
+#subbrute
+#httpx
 
 echo -e "\e[1;32m "
 #Need resolvers you can get from amass you can also generate with shuffledns store them in specifc directory and add this directory path in resolver variable
