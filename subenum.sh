@@ -6,12 +6,12 @@
 #subfinder
 #amass
 #sublist3r
-#subbrute
 #httpx
 
 echo -e "\e[1;32m "
 #Need resolvers you can get from amass you can also generate with shuffledns store them in specifc directory and add this directory path in resolver variable
-resolver=/home/sushant/subbrute/resolvers.txt
+resolver=/home/sushant/subbrute/resolver.txt
+wordlist=/home/sushant/subdomains.txt
 target=$1
 
 if [ $# -gt 2 ]; then
@@ -38,7 +38,7 @@ subfinder -d $target | tee new-$target/$target-subfinder.txt
 echo -e "\e[1;34m [+] Enumerating Subdomain from the amass \e[0m"
 amass enum -passive -d $target | tee new-$target/$target-amass.txt
 echo -e "\e[1;34m [+] Enumerating Subdomain from the sublist3r \e[0m"
-sublist3r -d $target | tee new-$target/$target-sublist.txt
+sublist3r -d $target -o new-$target/$target-sublist.txt
 
 #copy above all different files finded subdomain in one spefic file
 cat new-$target/*.txt > new-$target/allsub-$target.txt
@@ -57,18 +57,23 @@ rm new-$target/allsub-$target.txt
 #for domain in $(cat new-$target/thirdlevel.txt); do sublist3r -d $domain -o new-$target/$domain.txt | sort -u >> new-$target/final.txt;done
 #rm new-$target/thirdlevel.txt
 
-echo -e "\e[1;34m [+] Enumerating Subdomain from the subbrute \e[0m"
-python /home/sushant/subbrute/subbrute.py $target -s new-$target/allsortedsub-$target.txt -r $resolver -o new-$target/$target-subbrute.txt
-cat new-$target/*.txt > new-$target/allsubdomains.txt
-rm new-$target/allsortedsub-$target.txt new-$target/$target-subbrute.txt
-cat new-$target/allsubdomains.txt | grep $target | sort -u | tee new-$target/new-allsub-$target.txt
-rm new-$target/allsubdomains.txt
+#echo -e "\e[1;34m [+] Enumerating Subdomain from the subbrute \e[0m"
+#python3 /home/sushant/subbrute/subbrute.py $target -s new-$target/allsortedsub-$target.txt -r $resolver -o new-$target/$target-subbrute.txt
+#cat new-$target/*.txt > new-$target/allsubdomains.txt
+#rm new-$target/allsortedsub-$target.txt new-$target/$target-subbrute.txt
+#cat new-$target/allsubdomains.txt | grep $target | sort -u | tee new-$target/new-allsub-$target.txt
+#rm new-$target/allsubdomains.txt
+#echo -e "\e[1;34m [+] Bruteforcing Subdomain with gobuster \e[0m"
+#gobuster dns -d $target -w $wordlist -o new-$target/$target-brutesub.txt
+#cat new-$target/*.txt > new-$target/allfinalsub.txt
+#cat new-$target/allfinalsub.txt | sort -u | new-$target/allfinalsortedsub.txt
+#rm new-$target/$target-brutesub.txt new-$target/allsortedsub-$target.txt new-$target/allfinalsub.txt
 
 echo -e "\e[1;34m [+] Running Httpx for live host \e[0m"
-cat new-$target/new-allsub-$target.txt | httpx -silent | tee new-$target/validsubdomain-$target.txt
+cat new-$target/allsortedsub-$target.txt | httpx -silent | tee new-$target/validsubdomain-$target.txt
 
 echo -e "\e[1;34m [+] Total Founded subdomains \e[0m"
-cat new-$target/new-allsub-$target.txt | wc -w
+cat new-$target/allsortedsub-$target.txt | wc -w
 echo -e "\e[1;34m [+] Total Founded valid subdomains \e[0m"
 cat new-$target/validsubdomain-$target.txt | wc -w
-echo -e "\e[1;34m [+] Finished all recon \e[0m"
+echo -e "\e[1;34m [+] Finished all recon see your outpute generated on new-$target dir \e[0m"
