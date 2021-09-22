@@ -76,4 +76,4 @@ echo -e "\e[1;34m [+] Total Founded subdomains \e[0m"
 cat new-$target/allsortedsub-$target.txt | wc -w
 echo -e "\e[1;34m [+] Total Founded valid subdomains \e[0m"
 cat new-$target/validsubdomain-$target.txt | wc -w
-echo -e "\e[1;34m [+] Finished all recon see your outpute generated on new-$target dir \e[0m"
+echo -e "[+] Finished all recon see your outpute generated on \e[1;34m new-$target dir \e[0m"
