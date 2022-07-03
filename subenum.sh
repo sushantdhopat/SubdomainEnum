@@ -1,6 +1,6 @@
 #! /bin/bash
 #Author: sushant dhopat
-#Basic recon tool
+#Basic subdomain recon tool
 #Tools:-
 #Assetfinder 
 #subfinder
@@ -24,7 +24,7 @@ fi
 if [ ! -d new-$target ]; then
        mkdir new-$target
  else
-    echo "we cant create the same file in same directory please remove first!!!Thanks"
+    echo "sorry we cant create the same file in same directory please remove first one new-$target !!!Thanks"
     exit 1
 
 fi
@@ -47,33 +47,37 @@ rm new-$target/$target-assetfinder.txt new-$target/$target-subfinder.txt new-$ta
  
 cat new-$target/allsub-$target.txt | sort -u | tee new-$target/allsortedsub-$target.txt
 rm new-$target/allsub-$target.txt
+#new file generated new-$target/allsortedsub-$target.txt
 
 #gathering third level domain
-#echo -e "\e[1;34m [+] compiling third level subdomain \e[0m"
-#cat new-$target/allsortedsub-$target.txt | grep -Po '(\w+\.\w+\.\w+)$' | sort -u >> new-$target/thirdlevel.txt
+echo -e "\e[1;34m [+] compiling third level subdomain \e[0m"
+cat new-$target/allsortedsub-$target.txt | grep -Po '(\w+\.\w+\.\w+)$' | sort -u >> new-$target/thirdlevel.txt
 
-#echo -e "\e[1;34m [+] Gathering all thirdlevel subdomain throw sublist3r \e[0m"
+echo -e "\e[1;34m [+] Gathering all thirdlevel subdomain throw sublist3r \e[0m"
 
-#for domain in $(cat new-$target/thirdlevel.txt); do sublist3r -d $domain -o new-$target/$domain.txt | sort -u >> new-$target/final.txt;done
-#rm new-$target/thirdlevel.txt
+for domain in $(cat new-$target/thirdlevel.txt); do sublist3r -d $domain -o new-$target/$domain.txt | sort -u >> new-$target/final.txt;done
+rm new-$target/thirdlevel.txt
+#new file generated new-$target/final.txt
 
-#echo -e "\e[1;34m [+] Enumerating Subdomain from the subbrute \e[0m"
-#python3 /home/sushant/subbrute/subbrute.py $target -s new-$target/allsortedsub-$target.txt -r $resolver -o new-$target/$target-subbrute.txt
-#cat new-$target/*.txt > new-$target/allsubdomains.txt
-#rm new-$target/allsortedsub-$target.txt new-$target/$target-subbrute.txt
-#cat new-$target/allsubdomains.txt | grep $target | sort -u | tee new-$target/new-allsub-$target.txt
-#rm new-$target/allsubdomains.txt
-#echo -e "\e[1;34m [+] Bruteforcing Subdomain with gobuster \e[0m"
-#gobuster dns -d $target -w $wordlist -o new-$target/$target-brutesub.txt
-#cat new-$target/*.txt > new-$target/allfinalsub.txt
-#cat new-$target/allfinalsub.txt | sort -u | new-$target/allfinalsortedsub.txt
-#rm new-$target/$target-brutesub.txt new-$target/allsortedsub-$target.txt new-$target/allfinalsub.txt
+echo -e "\e[1;34m [+] Enumerating Subdomain from the subbrute \e[0m"
+python3 /home/sushant/subbrute/subbrute.py $target -s new-$target/allsortedsub-$target.txt -r $resolver -o new-$target/$target-subbrute.txt
+cat new-$target/*.txt > new-$target/allsubdomains.txt
+rm new-$target/$target-subbrute.txt
+cat new-$target/allsubdomains.txt | grep $target | sort -u | tee new-$target/new-allsub-$target.txt
+rm new-$target/allsubdomains.txt
+#new file is generated new-$target/new-allsub-$target.txt
+echo -e "\e[1;34m [+] Bruteforcing Subdomain with gobuster \e[0m"
+gobuster dns -d $target -w $wordlist -o new-$target/$target-brutesub.txt
+cat new-$target/*.txt > new-$target/allfinalsub.txt
+cat new-$target/allfinalsub.txt | sort -u | tee new-$target/allfinalsortedsub.txt
+#new file generated new-$target/allfinalsortedsub.txt
+rm new-$target/$target-brutesub.txt new-$target/allfinalsub.txt new-$target/allsortedsub-$target.txt new-$target/new-allsub-$target.txt new-$target/final.txt
 
 echo -e "\e[1;34m [+] Running Httpx for live host \e[0m"
-cat new-$target/allsortedsub-$target.txt | httpx -silent | tee new-$target/validsubdomain-$target.txt
+cat new-$target/allfinalsortedsub.txt | httpx -silent | tee new-$target/validsubdomain-$target.txt
 
 echo -e "\e[1;34m [+] Total Founded subdomains \e[0m"
-cat new-$target/allsortedsub-$target.txt | wc -w
+cat new-$target/allfinalsortedsub.txt | wc -w
 echo -e "\e[1;34m [+] Total Founded valid subdomains \e[0m"
 cat new-$target/validsubdomain-$target.txt | wc -w
 echo -e "[+] Finished all recon see your outpute generated on \e[1;34m new-$target \e[0m dir"
