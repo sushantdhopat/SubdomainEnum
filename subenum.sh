@@ -7,6 +7,8 @@
 #amass
 #sublist3r
 #httpx
+#subbrute
+#gobuster
 
 echo -e "\e[1;32m "
 #Need resolvers you can get from amass you can also generate with shuffledns store them in specifc directory and add this directory path in resolver variable
