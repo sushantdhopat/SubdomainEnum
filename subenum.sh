@@ -12,8 +12,8 @@
 
 echo -e "\e[1;32m "
 #Need resolvers you can get from amass you can also generate with shuffledns store them in specifc directory and add this directory path in resolver variable
-resolver=/home/sushant/subbrute/resolver.txt
-wordlist=/home/sushant/subdomains.txt
+resolver=/home/sushant/subbrute/resolver.txt #its a subbrute resolver path just pass your own path of subbrute tool
+wordlist=/home/sushant/subdomains.txt #its a wordlist for bruteforce subdomain just pass any sub bruteforce wordlist
 target=$1
 
 if [ $# -gt 2 ]; then
