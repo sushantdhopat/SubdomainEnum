@@ -10,7 +10,7 @@
 
 echo -e "\e[1;32m "
 #Need resolvers you can get from amass you can also generate with shuffledns store them in specifc directory and add this directory path in resolver variable
-resolver=/home/sushant/subbrute/resolver.txt
+resolver=/Users/sushantdhopat/Desktop/resolvers.txt
 wordlist=/home/sushant/subdomains.txt
 target=$1
 
@@ -38,46 +38,32 @@ subfinder -d $target | tee new-$target/$target-subfinder.txt
 echo -e "\e[1;34m [+] Enumerating Subdomain from the amass \e[0m"
 amass enum -passive -d $target | tee new-$target/$target-amass.txt
 echo -e "\e[1;34m [+] Enumerating Subdomain from the sublist3r \e[0m"
-python3 /Users/sushantdhopat/recon/Sublist3r/sublist3r.py -d $target -o new-$target/$target-sublist.txt
+python3 /Users/sushantdhopat/Desktop/Sublist3r/sublist3r.py -d $target -o new-$target/$target-sublist.txt
+#echo -e "\e[1;34m [+] Enumerating Subdomain from the censys \e[0m"
+#python3 /Users/sushantdhopat/Desktop/censys-subdomain-finder/censys-subdomain-finder.py $target | tee new-$target/$target-censys.txt
+echo -e "\e[1;34m [+] Enumerating Subdomain from the crt.sh \e[0m"
+curl -s https://crt.sh/\?q\=$target\&output\=json | jq -r '.[].name_value' | sed 's/\*\.//g' | sort -u | tee new-$target/$target-crt.txt
+
 
 #copy above all different files finded subdomain in one spefic file
 cat new-$target/*.txt > new-$target/allsub-$target.txt
-rm new-$target/$target-assetfinder.txt new-$target/$target-subfinder.txt new-$target/$target-amass.txt new-$target/$target-sublist.txt
+rm new-$target/$target-assetfinder.txt new-$target/$target-subfinder.txt new-$target/$target-amass.txt new-$target/$target-sublist.txt new-$target/$target-crt.txt
 #sorting the uniq domains
  
 cat new-$target/allsub-$target.txt | sort -u | tee new-$target/allsortedsub-$target.txt
 rm new-$target/allsub-$target.txt
-#new file generated new-$target/allsortedsub-$target.txt
 
-# #gathering third level domain
-# echo -e "\e[1;34m [+] compiling third level subdomain \e[0m"
-# cat new-$target/allsortedsub-$target.txt | grep -Po '(\w+\.\w+\.\w+)$' | sort -u >> new-$target/thirdlevel.txt
+echo -e "\e[1;34m [+] Running shuffledns  for resolve host \e[0m"
+shuffledns -d $target -list new-$target/allsortedsub-$target.txt -r $resolver | tee new-$target/$target-resolved.txt
 
-# echo -e "\e[1;34m [+] Gathering all thirdlevel subdomain throw sublist3r \e[0m"
-
-# for domain in $(cat new-$target/thirdlevel.txt); do sublist3r -d $domain -o new-$target/$domain.txt | sort -u >> new-$target/final.txt;done
-# rm new-$target/thirdlevel.txt
-# #new file generated new-$target/final.txt
-
-# echo -e "\e[1;34m [+] Enumerating Subdomain from the subbrute \e[0m"
-# python3 /home/sushant/subbrute/subbrute.py $target -s new-$target/allsortedsub-$target.txt -r $resolver -o new-$target/$target-subbrute.txt
-# cat new-$target/*.txt > new-$target/allsubdomains.txt
-# rm new-$target/$target-subbrute.txt
-# cat new-$target/allsubdomains.txt | grep $target | sort -u | tee new-$target/new-allsub-$target.txt
-# rm new-$target/allsubdomains.txt
-# #new file is generated new-$target/new-allsub-$target.txt
-# echo -e "\e[1;34m [+] Bruteforcing Subdomain with gobuster \e[0m"
-# gobuster dns -d $target -w $wordlist -o new-$target/$target-brutesub.txt
-# cat new-$target/*.txt > new-$target/allfinalsub.txt
-# cat new-$target/allfinalsub.txt | sort -u | tee new-$target/allfinalsortedsub.txt
-# #new file generated new-$target/allfinalsortedsub.txt
-# rm new-$target/$target-brutesub.txt new-$target/allfinalsub.txt new-$target/allsortedsub-$target.txt new-$target/new-allsub-$target.txt new-$target/final.txt
+echo -e "\e[1;34m [+] Gathering IP address of resolved subdomain \e[0m"
+bash /Users/sushantdhopat/Desktop/dtoip/dtoip.sh new-$target/$target-resolved.txt new-$target/ips.txt
 
 echo -e "\e[1;34m [+] Running Httpx for live host \e[0m"
 cat new-$target/allsortedsub-$target.txt | httpx -silent | tee new-$target/validsubdomain-$target.txt
 
 echo -e "\e[1;34m [+] Total Founded subdomains \e[0m"
-cat new-$target/allfinalsortedsub.txt | wc -w
+cat new-$target/allsortedsub-$target.txt | wc -w
 echo -e "\e[1;34m [+] Total Founded valid subdomains \e[0m"
 cat new-$target/validsubdomain-$target.txt | wc -w
 echo -e "[+] Finished all recon see your outpute generated on \e[1;34m new-$target \e[0m dir"
