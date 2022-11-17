@@ -104,6 +104,9 @@ cat new-$target/for-resolve-$target.txt | httpx -silent | tee new-$target/valids
 echo -e "\e[1;34m [+] performing screesnhots live hosts  \e[0m"
 gowitness -F file -f new-$target/validsubdomain-$target.txt -p new-$target/validdomainscreenshots
 
+echo -e "\e[1;34m [+] performing screesnhots on IPs  \e[0m"
+gowitness -F file -f new-$target/ips.txt -p new-$target/resolvedipscreenshots
+
 echo -e "\e[1;34m [+] Running ffuf on validsubdomain \e[0m"
 ffuf -u W2/W1 -w /$fuzz:W1,/new-$target/validsubdomain-$target.txt:W2 -fc 204,301,302,307,401,403,405,500 -fs 0 -acc www | tee new-$target/ffufresult
 
