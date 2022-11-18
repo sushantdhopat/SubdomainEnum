@@ -111,7 +111,7 @@ echo -e "\e[1;34m [+] performing screesnhots on IPs  \e[0m"
 gowitness -F file -f new-$target/validips-$target.txt -p new-$target/resolvedipscreenshots
 
 echo -e "\e[1;34m [+] Running ffuf on validsubdomain \e[0m"
-ffuf -u W2/W1 -w /$fuzz:W1,/new-$target/validsubdomain-$target.txt:W2 -fc 204,301,302,307,401,403,405,500 -fs 0 -acc www | tee new-$target/ffufresult
+ffuf -u W2/W1 -w $fuzz:W1,/new-$target/validsubdomain-$target.txt:W2 -fc 204,301,302,307,401,403,405,500 -fs 0 -acc www | tee new-$target/ffufresult
 
 echo -e "\e[1;34m [+] Running nuclie-templates on validsubdomain \e[0m"
 cat new-$target/validsubdomain-$target.txt | nuclei -t /root/nuclei-templates | tee tee new-$target/nuclei
