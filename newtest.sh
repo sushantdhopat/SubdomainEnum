@@ -3,7 +3,6 @@
 #sub enum
 echo -e "\e[1;32m "
 target=$1
-resolver=/root/resolvers.txt
 wordlist=/root/all.txt
 altdnswords=/root/altdns.txt
 
@@ -55,6 +54,10 @@ rm new-$target/$target-assetfinder.txt new-$target/$target-subfinder.txt new-$ta
  
 cat new-$target/allsub-$target.txt | sort -u | tee new-$target/allsortedsub-$target.txt
 rm new-$target/allsub-$target.txt
+
+echo -e "\e[1;34m [+] genarting rsolver file \e[0m"
+/root/dnsvalidator/dnsvalidator -tL https://public-dns.info/nameservers.txt -threads 200 -o resolvers.txt
+resolver=/root/resolvers.txt
 
 echo -e "\e[1;34m [+] Bruteforce subdomain throw puredns \e[0m"
 puredns bruteforce -r $resolver $wordlist $target | tee new-$target/bruteforce-$target.txt
