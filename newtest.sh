@@ -1,9 +1,7 @@
 #! /bin/bash
 #Author: sushant dhopat
 #sub enum
-
 echo -e "\e[1;32m "
-
 target=$1
 resolver=/root/resolvers.txt
 wordlist=/root/all.txt
@@ -14,7 +12,6 @@ if [ $# -gt 2 ]; then
        echo "./sub.sh google.com"
        exit 1
 fi
-
 
 if [ ! -d new-$target ]; then
        mkdir new-$target
@@ -37,7 +34,7 @@ echo -e "\e[1;34m [+] Enumerating Subdomain from the sublist3r \e[0m"
 python3 /root/Sublist3r/sublist3r.py -d $target -o new-$target/$target-sublist.txt
 
 echo -e "\e[1;34m [+] Enumerating Subdomain from the censys \e[0m"
-python3 /Users/sushantdhopat/Desktop/censys-subdomain-finder/censys-subdomain-finder.py $target | tee new-$target/$target-censys.txt
+python3 /root/censys-subdomain-finder/censys-subdomain-finder.py $target | tee new-$target/$target-censys.txt
 
 echo -e "\e[1;34m [+] Enumerating Subdomain from the crt.sh \e[0m"
 curl -s https://crt.sh/\?q\=$target\&output\=json | jq -r '.[].name_value' | sed 's/\*\.//g' | sort -u | tee new-$target/$target-crt.txt
@@ -48,31 +45,12 @@ curl -sk "http://web.archive.org/cdx/search/cdx?url=*.$1&output=txt&fl=original&
 echo -e "\e[1;34m [+] Enumerating Subdomain from the riddler.io \e[0m"
 curl -s "https://riddler.io/search/exportcsv?q=pld:$1" | grep -Po "(([\w.-]*)\.([\w]*)\.([A-z]))\w+" | sort -u | tee new-$target/$target-riddler.txt
 
-echo -e "\e[1;34m [+] Enumerating Subdomain from the virustottal \e[0m"
-curl -s "https://www.virustotal.com/ui/domains/$1/subdomains?limit=40" | grep -Po "((http|https):\/\/)?(([\w.-]*)\.([\w]*)\.([A-z]))\w+" | sort -u | tee new-$target/$target-virus.txt
-
-echo -e "\e[1;34m [+] Enumerating Subdomain from the subbuster \e[0m"
-curl -s "https://subbuster.cyberxplore.com/api/find?domain=$1" | grep -Po "(([\w.-]*)\.([\w]*)\.([A-z]))\w+" | tee new-$target/$target-subbuster.txt
-
-echo -e "\e[1;34m [+] Enumerating Subdomain from the certspotter \e[0m"
-curl -s "https://certspotter.com/api/v1/issuances?domain=$1&include_subdomains=true&expand=dns_names" | jq .[].dns_names | grep -Po "(([\w.-]*)\.([\w]*)\.([A-z]))\w+" | sort -u  | tee new-$target/$target-certspotter.txt
-
-echo -e "\e[1;34m [+] Enumerating Subdomain from the jldc.me \e[0m"
-curl -s "https://jldc.me/anubis/subdomains/$1" | grep -Po "((http|https):\/\/)?(([\w.-]*)\.([\w]*)\.([A-z]))\w+" | sort -u | tee new-$target/$target-jldc.txt
-
 echo -e "\e[1;34m [+] Enumerating Subdomain from the securitytrails \e[0m"
 curl -s "https://securitytrails.com/list/apex_domain/$1" | grep -Po "((http|https):\/\/)?(([\w.-]*)\.([\w]*)\.([A-z]))\w+" | grep ".$1" | sort -u | tee new-$target/$target-securitytrails.txt
 
-echo -e "\e[1;34m [+] Enumerating Subdomain from the sonar \e[0m"
-curl -s "https://sonar.omnisint.io/subdomains/$1" | grep -oE "[a-zA-Z0-9._-]+\.$1" | sort -u | tee new-$target/$target-sonar.txt
-
-echo -e "\e[1;34m [+] Enumerating Subdomain from the snapsint \e[0m"
-curl -s -X POST "https://synapsint.com/report.php" -d "name=https%3A%2F%2F$1" | grep -oE "[a-zA-Z0-9._-]+\.$1" | sort -u | tee new-$target/$target-synapsint.txt
-
-
 #copy above all different files finded subdomain in one spefic file
 cat new-$target/*.txt > new-$target/allsub-$target.txt
-rm new-$target/$target-assetfinder.txt new-$target/$target-subfinder.txt new-$target/$target-amass.txt new-$target/$target-sublist.txt new-$target/$target-crt.txt new-$target/$target-wayback.txt new-$target/$target-virus.txt new-$target/$target-certspotter.txt new-$target/$target-securitytrails.txt new-$target/$target-sonar.txt new-$target/$target-synapsint.txt new-$target/$target-subbuster.txt new-$target/$target-censys.txt new-$target/$target-jldc.txt
+rm new-$target/$target-assetfinder.txt new-$target/$target-subfinder.txt new-$target/$target-amass.txt new-$target/$target-sublist.txt new-$target/$target-crt.txt new-$target/$target-wayback.txt new-$target/$target-securitytrails.txt new-$target/$target-censys.txt new-$target/$target-riddler.txt
 #sorting the uniq domains
  
 cat new-$target/allsub-$target.txt | sort -u | tee new-$target/allsortedsub-$target.txt
@@ -114,10 +92,11 @@ echo -e "\e[1;34m [+] Running ffuf on validsubdomain \e[0m"
 ffuf -u W2/W1 -w $fuzz:W1,/new-$target/validsubdomain-$target.txt:W2 -fc 204,301,302,307,401,403,405,500 -fs 0 -acc www | tee new-$target/ffufresult
 
 echo -e "\e[1;34m [+] Running nuclie-templates on validsubdomain \e[0m"
-cat new-$target/validsubdomain-$target.txt | nuclei -t /root/nuclei-templates | tee tee new-$target/nuclei
+cat new-$target/validsubdomain-$target.txt | nuclei -t /root/nuclei-templates | tee new-$target/nuclei
 
 echo -e "\e[1;34m [+] performing nmap scan on resoved ip  \e[0m"
 nmap -p 1-65535 -sV -iL new-$target/ips.txt -oN new-$target/ipscanoutput.txt -oX new-$target/ipscanoutput.xml
+
 echo -e "\e[1;34m [+] performing nmap scan on resolved domains  \e[0m"
 nmap -p 1-65535 -sV -iL new-$target/resolved-$target.txt -oN new-$target/domainscanoutput.txt -oX new-$target/domainscanoutput.xml
 
