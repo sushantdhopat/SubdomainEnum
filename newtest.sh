@@ -167,6 +167,14 @@ else
   ffuf -u W2/W1 -w /root/tech/aspx.txt:W1,new-$target/tech/microsoft-domains.txt:W2 -fc 204,301,302,307,401,403,405,500 -fs 0 -acc www | tee new-$target/tech/valid-microsoft-files
 fi
 
+cat $file | nuclei -t /root/nuclei-templates/technologies/default-asp-net-page.yaml | tee new-$target/tech/asp-domains.txt
+
+if [ "microsoft-domains.txt" == 0 ]; then
+  echo "no any asp domains found"
+else
+  ffuf -u W2/W1 -w /root/tech/aspx.txt:W1,new-$target/tech/asp-domains.txt:W2 -fc 204,301,302,307,401,403,405,500 -fs 0 -acc www | tee new-$target/tech/valid-asp-files
+fi
+
 cat $file | nuclei -t /root/nuclei-templates/technologies/php-detect.yaml | tee new-$target/tech/php-domains.txt
 
 if [ "php-domains.txt" == 0 ]; then
