@@ -10,8 +10,8 @@ color(){
 }
 
 color
-echo -e "            Devloped by:${RED}${BLINK}Bl4cK_V1ru5${ENDCOLOR}"
-echo -e "            Twitter: ${CYAN}@Yazeed_oliwah${ENDCOLOR}"
+echo -e "            recon
+echo -e "            Twitter: ${CYAN}@sushantdhopat${ENDCOLOR}"
 
 #############Create Files###########
 
