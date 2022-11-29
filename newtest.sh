@@ -103,7 +103,4 @@ cat new-$target/for-resolve-$target.txt | wc -w
 echo -e "\e[1;34m [+] Total Founded valid subdomains \e[0m"
 cat new-$target/valid/validsubdomain-$target.txt | wc -w
 
-echo -e "\e[1;34m [+] finding login pages \e[0m"
-cat new-$target/valid/validsubdomain-$target.txt | nuclei -t /root/temp/login.yaml | tee new-$target/loginpage.txt
-
 echo -e "[+] Finished all recon see your outpute generated on \e[1;34m new-$target \e[0m dir"
