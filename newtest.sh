@@ -54,7 +54,7 @@ curl -s "https://securitytrails.com/list/apex_domain/$1" | grep -Po "((http|http
 
 #copy above all different files finded subdomain in one spefic file
 cat new-$target/*.txt > new-$target/allsub-$target.txt
-rm new-$target/$target-assetfinder.txt new-$target/$target-subfinder.txt new-$target/$target-amass.txt new-$target/$target-sublist.txt new-$target/$target-crt.txt new-$target/$target-wayback.txt new-$target/$target-securitytrails.txt n>
+rm new-$target/$target-assetfinder.txt new-$target/$target-subfinder.txt new-$target/$target-amass.txt new-$target/$target-sublist.txt new-$target/$target-crt.txt new-$target/$target-wayback.txt new-$target/$target-securitytrails.txt new-$target/$target-censys.txt new-$target/$target-riddler.txt new-$target/$target-github.txt
 #sorting the uniq domains
  
 cat new-$target/allsub-$target.txt | sort -u | tee new-$target/allsortedsub-$target.txt
@@ -64,16 +64,16 @@ echo -e "\e[1;34m [+] Bruteforce subdomain throw puredns \e[0m"
 puredns bruteforce -r $resolver $wordlist $target | tee new-$target/bruteforce-$target.txt
 
 echo -e "\e[1;34m [+] Bruteforce subdomain throw altdns \e[0m"
-altdns -i new-$target/allsortedsub-$target.txt -o new-$target -w $altdnswords -r -s new-$target/results_output.txt
+altdns -i new-$target/allsortedsub-$target.txt -o new-$target -w $perm -r -s new-$target/results_output.txt
 
 echo -e "\e[1;34m [+] Running dnsgen -perm \e[0m"
-cat new-$target/allsortedsub-$target.txt | dnsgen - | tee new-$target/dnsgen-$target.txt
+cat new-$target/allsortedsub-$target.txt | dnsgen -w $wordlist - | tee new-$target/dnsgen-$target.txt
 
-echo -e "\e[1;34m [+] Bruteforcing subdomains throw gotator \e[0m"
-gotator -sub new-$target/allsortedsub-$target.txt -perm $perm -depth 3 -numbers 10 -md -prefixes -adv -mindup | uniq | tee new-$target/gotator-$target.txt
+echo -e "\e[1;34m [+] Running gotator -perm \e[0m"
+timeout 10h gotator -sub new-$target/allsortedsub-$target.txt -perm $perm -depth 3 -numbers 10 -md | uniq | tee new-$target/gotator-$target.txt
 
 cat new-$target/*.txt > new-$target/unsortedresolve-$target.txt
-rm new-$target/allsortedsub-$target.txt new-$target/bruteforce-$target.txt new-$target/dnsgen-$target.txt new-$target/gotator-$target.txt new-$target/results_output.txt
+rm new-$target/allsortedsub-$target.txt new-$target/bruteforce-$target.txt new-$target/dnsgen-$target.txt new-$target/results_output.txt new-$target/gotator-$target.txt
 cat new-$target/unsortedresolve-$target.txt | sort -u | tee new-$target/for-resolve-$target.txt
 rm new-$target/unsortedresolve-$target.txt
 
