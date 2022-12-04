@@ -130,20 +130,55 @@ echo -e "\e[1;34m [+] performing nuclei scan on valid subdomains \e[0m"
 mkdir new-$target/nuclei
 
 cat new-$target/valid/validsubdomain-$target.txt | nuclei -severity critical -t /root/nuclei-templates -o new-$target/nuclei/critical
-
 cat new-$target/nuclei/critical | tr '[:upper:]' '[:lower:]'| anew | grep -v " "|grep -v "@" | grep "\." | wc -l
-
 cat new-$target/valid/validsubdomain-$target.txt | nuclei -severity high -t /root/nuclei-templates -o new-$target/nuclei/high
-
 cat new-$target/nuclei/high | tr '[:upper:]' '[:lower:]'| anew | grep -v " "|grep -v "@" | grep "\." | wc -l
-
 cat new-$target/valid/validsubdomain-$target.txt | nuclei -severity medium -t /root/nuclei-templates -o new-$target/nuclei/medium
-
 cat new-$target/nuclei/medium | tr '[:upper:]' '[:lower:]'| anew | grep -v " "|grep -v "@" | grep "\." | wc -l
-
 cat new-$target/valid/validsubdomain-$target.txt | nuclei -severity low -t /root/nuclei-templates -o new-$target/nuclei/low
-
 cat new-$target/nuclei/low | tr '[:upper:]' '[:lower:]'| anew | grep -v " "|grep -v "@" | grep "\." | wc -l
+
+echo -e "\e[1;34m [+] performing wayback for collecting waybackurls  \e[0m"
+
+mkdir new-$target/wayback
+
+cat new-$target/valid/validsubdomain-$target.txt | gau | tee new-$target/wayback/gau.txt
+cat new-$target/valid/validsubdomain-$target.txt | waybackurls | tee new-$target/wayback/wayback.txt
+cat new-$target/wayback/gau.txt new-$target/wayback/wayback.txt >> new-$target/wayback/allurl.txt
+rm new-$target/wayback/gau.txt new-$target/wayback/wayback.txt
+cat new-$target/wayback/allurl.txt | tr '[:upper:]' '[:lower:]'| anew | grep -v " "|grep -v "@" | grep "\." | wc -l
+sleep 5
+#api endpoint 
+echo -e "Starting Collect Api-Endpoint"
+cat new-$target/wayback/allurl.txt | grep -i "/api/" | sort -u | tee new-$target/wayback/apiend.txt
+cat Subdomains/API_EndPoint/Api-EndPoint.txt  | tr '[:upper:]' '[:lower:]'| anew | grep -v " "|grep -v "@" | grep "\." | wc -l
+sleep 5
+
+echo -e "\e[1;34m [+] performing Js files scan  \e[0m"
+
+mkdir new-$target/jsfile
+echo -e "Collect js,php,jsp,aspx File"
+
+cat new-$target/wayback/allurl.txt | grep -aEo 'https?://[^ ]+' | sed 's/]$//' | sort -u| grep -aEi "\.(js)" | tee new-$target/jsfile/Js-file.txt
+cat new-$target/jsfile/Js-file.txt | tr '[:upper:]' '[:lower:]'| anew | grep -v " "|grep -v "@" | grep "\." | wc -l
+cat new-$target/wayback/allurl.txt | grep -aEo 'https?://[^ ]+' | sed 's/]$//' | sort -u| grep -aEi "\.(php)" | tee new-$target/jsfile/PHP-file.txt
+cat new-$target/jsfile/PHP-file.txt  | tr '[:upper:]' '[:lower:]'| anew | grep -v " "|grep -v "@" | grep "\." | wc -l
+cat new-$target/wayback/allurl.txt | grep -aEo 'https?://[^ ]+' | sed 's/]$//' | sort -u| grep -aEi "\.(aspx)" | tee new-$target/jsfile/aspx-file.txt
+cat new-$target/jsfile/aspx-file.txt | tr '[:upper:]' '[:lower:]'| anew | grep -v " "|grep -v "@" | grep "\." | wc -l
+cat new-$target/wayback/allurl.txt | grep -aEo 'https?://[^ ]+' | sed 's/]$//' | sort -u| grep -aEi "\.(jsp)" | tee new-$target/jsfile/Jsp-file.txt
+cat new-$target/jsfile/Jsp-file.txt | tr '[:upper:]' '[:lower:]'| anew | grep -v " "|grep -v "@" | grep "\." | wc -l
+
+echo -e "Start Filter Js file"
+
+cat new-$target/jsfile/Js-file.txt | sort -u | httpx -content-type | grep 'application/javascript' | cut -d' ' -f1 > new-$target/jsfile/Js-file200.txt
+cat new-$target/jsfile/Js-file200.txt | tr '[:upper:]' '[:lower:]'| anew | grep -v " "|grep -v "@" | grep "\." | wc -l
+httpx -l new-$target/jsfile/Js-file200.txt -match-string "js.map" -o new-$target/jsfile/Jsmap.txt
+
+echo -e "Starting Js Scan"
+
+cat new-$target/jsfile/Js-file200.txt | nuclei -t /root/nuclei-templates/exposures/ -o new-$target/jsfile/nucleijs.txt
+cat new-$target/jsfile/nucleijs.txt | tr '[:upper:]' '[:lower:]'| anew | grep -v " "|grep -v "@" | grep "\." | wc -l
+#after collect key run these comannd on key nuclei -t $HOME/nuclei-templates/token-spray -var token=vt70wYM90ZixRqNPSqYC2FLokqpcZsYqvwc5NS04z6pIibNI63M814r
 
 mkdir new-$target/screenshots
 echo -e "\e[1;34m [+] performing screesnhots live hosts  \e[0m"
