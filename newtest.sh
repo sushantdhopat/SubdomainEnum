@@ -60,6 +60,35 @@ rm new-$target/$target-assetfinder.txt new-$target/$target-subfinder.txt new-$ta
 cat new-$target/allsub-$target.txt | sort -u | tee new-$target/allsortedsub-$target.txt
 rm new-$target/allsub-$target.txt
 
+echo -e "\e[1;34m [+] gathering ips from shodan \e[0m"
+
+mkdir new-$target/shodan
+  
+echo 'ssl:''"'$target'"' | uncover -e shodan,censys -v -o new-$target/shodan/ip1.txt
+echo 'ssl.cert.subject.CN''"'$target'"' | uncover -e shodan,censys -v -o new-$target/shodan/ip2.txt
+done
+cat new-$target/shodan/ip1.txt new-$target/shodan/ip2.txt >> new-$target/shodan/shodanip.txt
+rm new-$target/shodan/ip1.txt new-$target/shodan/ip2.txt
+
+cat new-$target/shodan/shodanip.txt | tr '[:upper:]' '[:lower:]'| anew | grep -v " "|grep -v "@" | grep "\." | wc -l
+
+echo -e "Starting Filter Ips"
+
+cat new-$target/shodan/shodanip.txt | httpx -o new-$target/shodan/shodanliveip.txt
+
+cat new-$target/shodan/shodanliveip.txt  | tr '[:upper:]' '[:lower:]'| anew | grep -v " "|grep -v "@" | grep "\." | wc -l
+
+#echo -e "Starting Scan Ports For Ips"
+#naabu  -list Shodan/ip.txt  -exclude-ports 80,443 -o Shodan/port_ip.txt &>/dev/null
+
+#cat  Subdomains/Shodan/port_ip.txt  | tr '[:upper:]' '[:lower:]'| anew | grep -v " "|grep -v "@" | grep "\." | wc -l
+
+#echo -e "Starting Filter Ports"
+#cat Shodan/port_ip.txt | httpx -o Shodan/live_port_ip.txt &>/dev/null
+
+#cat  Subdomains/Shodan/live_port_ip.txt  | tr '[:upper:]' '[:lower:]'| anew | grep -v " "|grep -v "@" | grep "\." | wc -l
+
+
 echo -e "\e[1;34m [+] Bruteforce subdomain throw puredns \e[0m"
 puredns bruteforce -r $resolver $wordlist $target | tee new-$target/bruteforce-$target.txt
 
@@ -91,11 +120,36 @@ cat new-$target/for-resolve-$target.txt | httpx -silent | tee new-$target/valid/
 echo -e "\e[1;34m [+] Running Httpx for live ips \e[0m"
 cat new-$target/ips.txt | httpx -silent | tee new-$target/valid/validips-$target.txt
 
-mkdir new-$target/screesnhots
+echo -e "\e[1;34m [+] Gathering technologies fro valid domains \e[0m"
+mkdir new-$target/tech
+webanalyze -hosts new-$target/valid/validsubdomain-$target.txt | tee new-$target/tech/validsubtech.txt
+webanalyze -hosts new-$target/valid/validips-$target.txt | tee new-$target/tech/validiptech.txt
+
+echo -e "\e[1;34m [+] performing nuclei scan on valid subdomains \e[0m"
+
+mkdir new-$target/nuclei
+
+cat new-$target/valid/validsubdomain-$target.txt | nuclei -severity critical -t /root/nuclei-templates -o new-$target/nuclei/critical
+
+cat new-$target/nuclei/critical | tr '[:upper:]' '[:lower:]'| anew | grep -v " "|grep -v "@" | grep "\." | wc -l
+
+cat new-$target/valid/validsubdomain-$target.txt | nuclei -severity high -t /root/nuclei-templates -o new-$target/nuclei/high
+
+cat new-$target/nuclei/high | tr '[:upper:]' '[:lower:]'| anew | grep -v " "|grep -v "@" | grep "\." | wc -l
+
+cat new-$target/valid/validsubdomain-$target.txt | nuclei -severity medium -t /root/nuclei-templates -o new-$target/nuclei/medium
+
+cat new-$target/nuclei/medium | tr '[:upper:]' '[:lower:]'| anew | grep -v " "|grep -v "@" | grep "\." | wc -l
+
+cat new-$target/valid/validsubdomain-$target.txt | nuclei -severity low -t /root/nuclei-templates -o new-$target/nuclei/low
+
+cat new-$target/nuclei/low | tr '[:upper:]' '[:lower:]'| anew | grep -v " "|grep -v "@" | grep "\." | wc -l
+
+mkdir new-$target/screenshots
 echo -e "\e[1;34m [+] performing screesnhots live hosts  \e[0m"
-cat new-$target/valid/validsubdomain-$target.txt | aquatone -out new-$target/screesnhots/$target.1
+cat new-$target/valid/validsubdomain-$target.txt | aquatone -out new-$target/screenshots/$target.1
 echo -e "\e[1;34m [+] performing screesnhots on IPs  \e[0m"
-cat new-$target/valid/validips-$target.txt | aquatone -out new-$target/screesnhots/$target.2
+cat new-$target/valid/validips-$target.txt | aquatone -out new-$target/screenshots/$target.2
 
 echo -e "\e[1;34m [+] Total Founded subdomains \e[0m"
 cat new-$target/for-resolve-$target.txt | wc -w
