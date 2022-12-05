@@ -60,35 +60,6 @@ rm new-$target/$target-assetfinder.txt new-$target/$target-subfinder.txt new-$ta
 cat new-$target/allsub-$target.txt | sort -u | tee new-$target/allsortedsub-$target.txt
 rm new-$target/allsub-$target.txt
 
-echo -e "\e[1;34m [+] gathering ips from shodan \e[0m"
-
-mkdir new-$target/shodan
-  
-echo 'ssl:''"'$target'"' | uncover -e shodan,censys -v -o new-$target/shodan/ip1.txt
-echo 'ssl.cert.subject.CN''"'$target'"' | uncover -e shodan,censys -v -o new-$target/shodan/ip2.txt
-done
-cat new-$target/shodan/ip1.txt new-$target/shodan/ip2.txt >> new-$target/shodan/shodanip.txt
-rm new-$target/shodan/ip1.txt new-$target/shodan/ip2.txt
-
-cat new-$target/shodan/shodanip.txt | tr '[:upper:]' '[:lower:]'| anew | grep -v " "|grep -v "@" | grep "\." | wc -l
-
-echo -e "Starting Filter Ips"
-
-cat new-$target/shodan/shodanip.txt | httpx -o new-$target/shodan/shodanliveip.txt
-
-cat new-$target/shodan/shodanliveip.txt  | tr '[:upper:]' '[:lower:]'| anew | grep -v " "|grep -v "@" | grep "\." | wc -l
-
-#echo -e "Starting Scan Ports For Ips"
-#naabu  -list Shodan/ip.txt  -exclude-ports 80,443 -o Shodan/port_ip.txt &>/dev/null
-
-#cat  Subdomains/Shodan/port_ip.txt  | tr '[:upper:]' '[:lower:]'| anew | grep -v " "|grep -v "@" | grep "\." | wc -l
-
-#echo -e "Starting Filter Ports"
-#cat Shodan/port_ip.txt | httpx -o Shodan/live_port_ip.txt &>/dev/null
-
-#cat  Subdomains/Shodan/live_port_ip.txt  | tr '[:upper:]' '[:lower:]'| anew | grep -v " "|grep -v "@" | grep "\." | wc -l
-
-
 echo -e "\e[1;34m [+] Bruteforce subdomain throw puredns \e[0m"
 puredns bruteforce -r $resolver $wordlist $target | tee new-$target/bruteforce-$target.txt
 
@@ -179,6 +150,36 @@ echo -e "Starting Js Scan"
 cat new-$target/jsfile/Js-file200.txt | nuclei -t /root/nuclei-templates/exposures/ -o new-$target/jsfile/nucleijs.txt
 cat new-$target/jsfile/nucleijs.txt | tr '[:upper:]' '[:lower:]'| anew | grep -v " "|grep -v "@" | grep "\." | wc -l
 #after collect key run these comannd on key nuclei -t $HOME/nuclei-templates/token-spray -var token=vt70wYM90ZixRqNPSqYC2FLokqpcZsYqvwc5NS04z6pIibNI63M814r
+
+echo -e "\e[1;34m [+] performing param discovery  \e[0m"
+mkdir new-$target/param
+
+echo -e "Start Parameter Discovery"
+for x in $(cat new-$target/valid/validsubdomain-$target.txt )
+do
+python3 /root/ParamSpider/paramspider.py  --domain $x -o new-$target/param/param
+done
+cat new-$target/param/param/* > new-$target/param/params.txt
+cat new-$target/param/params.txt | sort -u | tee cat new-$target/param/finalparams.txt
+rm new-$target/param/params.txt
+
+echo -e "performing XRAY scan on founded param"
+mkdir new-$target/xray
+for x in $(cat new-$target/param/finalparams.txt )
+do
+/root/xray webscan --url $x --plugins xss,sqldet,cmd-injection,path-traversal,xxe,jsonp,ssrf,baseline,redirect,crlf-injection --json-output new-$target/xray/result.json
+
+echo -e "running http request smuggler"
+cat new-$target/valid/validsubdomain-$target.txt | python3 /root/smuggler/smuggler.py
+
+
+echo -e "performing CRLF fuzz"
+mkdir new-$target/crlf
+crlfuzz -l new-$target/valid/validsubdomain-$target.txt -o new-$target/crlf/result.txt
+
+echo -e "gathering some valid service on valid domains"
+mkdir new-$target/service
+dnsx -silent -l new-$target/valid/validsubdomain-$target.txt -w jira,grafana,jenkins -o new-$target/service/service.txt
 
 mkdir new-$target/screenshots
 echo -e "\e[1;34m [+] performing screesnhots live hosts  \e[0m"
