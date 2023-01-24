@@ -13,22 +13,50 @@ color
 echo -e " recon "
 
 #############Create Files###########
-domain=$1
+target=$1
 
 mkdir  -p Subdomains/ 
 cd Subdomains
 mkdir  -p Subdomains/ API_EndPoint/ Nuclei/ Wayback_URLS/ nabuu/ Trash/ Wayback-file/ 
 cd ../
 
+echo -e "\e[1;34m [+] Enumerating Subdomain from the assetfinder \e[0m"
+echo $target | assetfinder -subs-only| tee Subdomains/Trash/assetfinder.txt
+
+echo -e "\e[1;34m [+] Enumerating Subdomain from the subfinder \e[0m"
+subfinder -d $target | tee Subdomains/Trash/subfinder.txt
+
+echo -e "\e[1;34m [+] Enumerating Subdomain from the amass \e[0m"
+#amass enum -active -d $target -brute -w $wordlist -config /root/config.ini | tee new-$target/$target-amass.txt
+amass enum -passive -norecursive -noalts -d $target | tee  Subdomains/Trash/amass1.txt
+echo -e "\e[1;34m [+] Enumerating Subdomain from the sublist3r \e[0m"
+python3 /root/Sublist3r/sublist3r.py -d $target -o Subdomains/Trash/sublist.txt
+
+export CENSYS_API_ID=302bdd0b-930c-491b-a0ac-0c3caeb9725e
+export CENSYS_API_SECRET=ZZTUbdkPJf2y3ehntVCLvDeFlHaOUddF
+echo -e "\e[1;34m [+] Enumerating Subdomain from the censys \e[0m"
+python3 /root/censys-subdomain-finder/censys-subdomain-finder.py $target -o Subdomains/Trash/censys.txt
+
+echo -e "\e[1;34m [+] Enumerating Subdomain from the crt.sh \e[0m"
+curl -s https://crt.sh/\?q\=$target\&output\=json | jq -r '.[].name_value' | sed 's/\*\.//g' | sort -u | tee Subdomains/Trash/crt.txt
+
+
+#copy above all different files finded subdomain in one spefic file
+cat Subdomains/Trash/*.txt > Subdomains/Trash/allsub.txt
+rm Subdomains/Trash/assetfinder.txt Subdomains/Trash/subfinder.txt Subdomains/Trash/amass1.txt Subdomains/Trash/sublist.txt Subdomains/Trash/censys.txt Subdomains/Trash/crt.txt
+#sorting the uniq domains
+cat Subdomains/Trash/allsub.txt | sort -u | tee Subdomains/Trash/allsorted.txt
+rm Subdomains/Trash/allsorted.txt
+
 echo -e "${GREEN} Starting Subdomain-Enumeration: ${ENDCOLOR}"  
-amass enum -passive -norecursive -noalts -df $domain -o  Subdomains/Trash/amass.txt &>/dev/null
+amass enum -passive -norecursive -noalts -df Subdomains/Trash/allsorted.txt -o  Subdomains/Trash/amass.txt &>/dev/null
 echo -e "\e[36m     \_amass count: \e[32m$(cat Subdomains/Trash/amass.txt | tr '[:upper:]' '[:lower:]'| anew | wc -l)\e[0m"  
-subfinder -dL $domain -o Subdomains/Trash/subfinder.txt &>/dev/null
+subfinder -dL Subdomains/Trash/allsorted.txt -o Subdomains/Trash/subfinder.txt &>/dev/null
 echo -e "\e[36m      \_subfinder count: \e[32m$(cat  Subdomains/Trash/subfinder.txt | tr '[:upper:]' '[:lower:]'| anew | wc -l)\e[0m"
-cat $domain | assetfinder --subs-only >> Subdomains/Trash/assetfinder.txt &>/dev/null
+cat Subdomains/Trash/allsorted.txt | assetfinder --subs-only >> Subdomains/Trash/assetfinder.txt &>/dev/null
 echo -e "\e[36m       \_assetfinder count: \e[32m$(cat  Subdomains/Trash/assetfinder.txt | tr '[:upper:]' '[:lower:]'| anew | wc -l)\e[0m"
   
-for x in $(cat $domain)
+for x in $(cat Subdomains/Trash/allsorted.txt)
 do
 python3 /root/Sublist3r/sublist3r.py -d $x | grep -oP  "(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z0-9][a-z0-9-]{0,61}[a-z0-9]" >> Subdomains/Trash/sublist3r.txt &>/dev/null
 done
@@ -124,8 +152,6 @@ cat Subdomains/Subdomains/livesub.txt | nuclei -severity medium -t /root/nuclei-
 echo -e "\e[36m    \_Final medium Vuln  count: \e[32m$(cat Subdomains/Nuclei/sub/meduim.txt  | tr '[:upper:]' '[:lower:]'| anew | grep -v " "|grep -v "@" | grep "\." | wc -l)\e[0m"
 cat Subdomains/Subdomains/livesub.txt | nuclei -severity low -t /root/nuclei-templates -o Subdomains/Nuclei/sub/low.txt &>/dev/null
 echo -e "\e[36m    \_Final low Vuln  count: \e[32m$(cat Subdomains/Nuclei/sub/low.txt  | tr '[:upper:]' '[:lower:]'| anew | grep -v " "|grep -v "@" | grep "\." | wc -l)\e[0m"
-cat Subdomains/Subdomains/livesub.txt | nuclei -severity info -t /root/nuclei-templates -o Subdomains/Nuclei/sub/info.txt &>/dev/null
-echo -e "\e[36m    \_Final info Vuln  count: \e[32m$(cat Subdomains/Nuclei/sub/info.txt  | tr '[:upper:]' '[:lower:]'| anew | grep -v " "|grep -v "@" | grep "\." | wc -l)\e[0m"
 echo -e "${YELLOW} scan Sub_Vuln done ${ENDCOLOR} "
 echo -e " scan Sub_Vuln done  " | notify &>/dev/null
 
@@ -144,9 +170,6 @@ echo -e "\e[36m    \_Final medium Vuln  count: \e[32m$(cat Subdomains/Nuclei/por
 
 cat Subdomains/nabuu/liveport.txt | nuclei -severity low -t /root/nuclei-templates -o Subdomains/Nuclei/port/low.txt &>/dev/null
 echo -e "\e[36m    \_Final low Vuln  count: \e[32m$(cat Subdomains/Nuclei/port/low.txt  | tr '[:upper:]' '[:lower:]'| anew | grep -v " "|grep -v "@" | grep "\." | wc -l)\e[0m"
-
-cat Subdomains/nabuu/liveport.txt | nuclei -severity info -t /root/nuclei-templates -o Subdomains/Nuclei/port/info.txt &>/dev/null
-echo -e "\e[36m    \_Final info Vuln  count: \e[32m$(cat Subdomains/Nuclei/port/info.txt  | tr '[:upper:]' '[:lower:]'| anew | grep -v " "|grep -v "@" | grep "\." | wc -l)\e[0m"
 
 echo "${YELLOW} scan Sub_port_Vuln done ${ENDCOLOR} "
 echo " scan Sub_port_Vuln done  " | notify &>/dev/null
