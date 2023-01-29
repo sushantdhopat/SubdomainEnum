@@ -21,44 +21,45 @@ mkdir  -p Subdomains/ API_EndPoint/ Nuclei/ Wayback_URLS/ nabuu/ Trash/ Wayback-
 cd ../
 
 echo -e "\e[1;34m [+] Enumerating Subdomain from the assetfinder \e[0m"
-echo $target | assetfinder -subs-only| tee Subdomains/Trash/assetfinder.txt
-
+echo $target | assetfinder -subs-only >> Subdomains/Trash/assetfinder.txt
+echo -e "\e[36m     \_assetfinder count: \e[32m$(cat Subdomains/Trash/assetfinder.txt | tr '[:upper:]' '[:lower:]'| wc -l)\e[0m"
 echo -e "\e[1;34m [+] Enumerating Subdomain from the subfinder \e[0m"
-subfinder -d $target | tee Subdomains/Trash/subfinder.txt
-
+subfinder -d $target >> Subdomains/Trash/subfinder.txt
+echo -e "\e[36m     \_subfinder count: \e[32m$(cat Subdomains/Trash/subfinder.txt | tr '[:upper:]' '[:lower:]'| wc -l)\e[0m"
 echo -e "\e[1;34m [+] Enumerating Subdomain from the amass \e[0m"
 #amass enum -active -d $target -brute -w $wordlist -config /root/config.ini | tee new-$target/$target-amass.txt
-amass enum -passive -norecursive -noalts -d $target | tee  Subdomains/Trash/amass1.txt
+amass enum -passive -norecursive -noalts -d $target >>  Subdomains/Trash/amass1.txt
+echo -e "\e[36m     \_amass count: \e[32m$(cat Subdomains/Trash/amass1.txt | tr '[:upper:]' '[:lower:]'| wc -l)\e[0m"
 echo -e "\e[1;34m [+] Enumerating Subdomain from the sublist3r \e[0m"
 python3 /root/Sublist3r/sublist3r.py -d $target -o Subdomains/Trash/sublist.txt
-
+echo -e "\e[36m     \_sublist count: \e[32m$(cat Subdomains/Trash/sublist.txt | tr '[:upper:]' '[:lower:]'| wc -l)\e[0m"
 export CENSYS_API_ID=302bdd0b-930c-491b-a0ac-0c3caeb9725e
 export CENSYS_API_SECRET=ZZTUbdkPJf2y3ehntVCLvDeFlHaOUddF
 echo -e "\e[1;34m [+] Enumerating Subdomain from the censys \e[0m"
 python3 /root/censys-subdomain-finder/censys-subdomain-finder.py $target -o Subdomains/Trash/censys.txt
-
+echo -e "\e[36m     \_censys count: \e[32m$(cat Subdomains/Trash/censys.txt | tr '[:upper:]' '[:lower:]'| wc -l)\e[0m"
 echo -e "\e[1;34m [+] Enumerating Subdomain from the crt.sh \e[0m"
-curl -s https://crt.sh/\?q\=$target\&output\=json | jq -r '.[].name_value' | sed 's/\*\.//g' | sort -u | tee Subdomains/Trash/crt.txt
-
+curl -s https://crt.sh/\?q\=$target\&output\=json | jq -r '.[].name_value' | sed 's/\*\.//g' | sort -u >> Subdomains/Trash/crt.txt
+echo -e "\e[36m     \_crt count: \e[32m$(cat Subdomains/Trash/crt.txt | tr '[:upper:]' '[:lower:]'| wc -l)\e[0m"
 
 #copy above all different files finded subdomain in one spefic file
 cat Subdomains/Trash/*.txt > Subdomains/Trash/allsub.txt
 rm Subdomains/Trash/assetfinder.txt Subdomains/Trash/subfinder.txt Subdomains/Trash/amass1.txt Subdomains/Trash/sublist.txt Subdomains/Trash/censys.txt Subdomains/Trash/crt.txt
 #sorting the uniq domains
-cat Subdomains/Trash/allsub.txt | sort -u | tee Subdomains/Trash/allsorted.txt
-rm Subdomains/Trash/allsorted.txt
+cat Subdomains/Trash/allsub.txt | sed 's/\*.//g' | sort -u | tee Subdomains/Trash/allsorted.txt; notify -rl 1 -silent -data Subdomains/Trash/allsorted.txt -bulk  -id basic-subenum-completed
+rm Subdomains/Trash/allsub.txt
 
 echo -e "${GREEN} Starting Subdomain-Enumeration: ${ENDCOLOR}"  
-amass enum -passive -norecursive -noalts -df Subdomains/Trash/allsorted.txt -o  Subdomains/Trash/amass.txt &>/dev/null
+amass enum -passive -norecursive -noalts -df Subdomains/Trash/allsorted.txt -o  Subdomains/Trash/amass.txt &>/dev/null; notify -rl 1 -silent -data Subdomains/Trash/amass.txt -bulk
 echo -e "\e[36m     \_amass count: \e[32m$(cat Subdomains/Trash/amass.txt | tr '[:upper:]' '[:lower:]'| anew | wc -l)\e[0m"  
-subfinder -dL Subdomains/Trash/allsorted.txt -o Subdomains/Trash/subfinder.txt &>/dev/null
+subfinder -dL Subdomains/Trash/allsorted.txt -o Subdomains/Trash/subfinder.txt &>/dev/null; notify -rl 1 -silent -data Subdomains/Trash/subfinder.txt -bulk
 echo -e "\e[36m      \_subfinder count: \e[32m$(cat  Subdomains/Trash/subfinder.txt | tr '[:upper:]' '[:lower:]'| anew | wc -l)\e[0m"
-cat Subdomains/Trash/allsorted.txt | assetfinder --subs-only >> Subdomains/Trash/assetfinder.txt &>/dev/null
+cat Subdomains/Trash/allsorted.txt | assetfinder --subs-only >> Subdomains/Trash/assetfinder.txt; notify -rl 1 -silent -data Subdomains/Trash/assetfinder.txt -bulk
 echo -e "\e[36m       \_assetfinder count: \e[32m$(cat  Subdomains/Trash/assetfinder.txt | tr '[:upper:]' '[:lower:]'| anew | wc -l)\e[0m"
   
 for x in $(cat Subdomains/Trash/allsorted.txt)
 do
-python3 /root/Sublist3r/sublist3r.py -d $x | grep -oP  "(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z0-9][a-z0-9-]{0,61}[a-z0-9]" >> Subdomains/Trash/sublist3r.txt &>/dev/null
+python3 /root/Sublist3r/sublist3r.py -d $x | grep -oP  "(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z0-9][a-z0-9-]{0,61}[a-z0-9]" >> Subdomains/Trash/sublist3r.txt; notify -rl 1 -silent -data Subdomains/Trash/sublist3r.txt -bulk
 done
 echo -e "\e[36m        \_sublist3r count: \e[32m$(cat  Subdomains/Trash/sublist3r.txt | tr '[:upper:]' '[:lower:]'| anew | wc -l)\e[0m"
 echo -e "${GREEN} Started Filtering Subdomains: ${ENDCOLOR}"
@@ -67,35 +68,40 @@ for x in $(cat $domain)
 do
 cat Subdomains/Trash/* | grep -i $x | anew >> Subdomains/Trash/final-result
 done
-cat Subdomains/Trash/final-result | sort -u >> Subdomains/Subdomains/Final_Subdomains.txt
+cat Subdomains/Trash/final-result | sed 's/\*.//g' | sort -u >> Subdomains/Subdomains/Final_Subdomains.txt; notify -rl 1 -silent -data Subdomains/Subdomains/Final_Subdomains.txt -bulk -id final-word-list
 echo -e "\e[36mFinal Subdomains count: \e[32m$(cat Subdomains/Subdomains/Final_Subdomains.txt | tr '[:upper:]' '[:lower:]'| anew | grep -v " "|grep -v "@" | grep "\." | wc -l)\e[0m"
-cat Subdomains/Subdomains/Final_Subdomains.txt | httpx -o Subdomains/Subdomains/livesub.txt &>/dev/null
+cat Subdomains/Subdomains/Final_Subdomains.txt | httpx -o Subdomains/Subdomains/livesub.txt &>/dev/null; notify -rl 1 -silent -data Subdomains/Subdomains/livesub.txt -bulk -id live-sub
 echo -e "\e[36mFinal live Subdomains count: \e[32m$(cat Subdomains/Subdomains/livesub.txt | tr '[:upper:]' '[:lower:]'| anew | grep -v " "|grep -v "@" | grep "\." | wc -l)\e[0m"
 echo -e "${GREEN} Starting Filter Intresting subs: ${ENDCOLOR}"
-cat Subdomains/Subdomains/livesub.txt | grep -E "auth|corp|sign_in|sign_up|ldap|idp|dev|api|admin|login|signup|jira|gitlab|signin|ftp|ssh|git|jenkins|kibana|administration|administrator|administrative|grafana|vpn|jfroge" >> Subdomains/Subdomains/intrested_live_sub.txt
+cat Subdomains/Subdomains/livesub.txt | grep -E "auth|corp|sign_in|sign_up|ldap|idp|dev|api|admin|login|signup|jira|gitlab|signin|ftp|ssh|git|jenkins|kibana|administration|administrator|administrative|grafana|vpn|jfroge" >> Subdomains/Subdomains/intrested_live_sub.txt; notify -rl 1 -silent -data Subdomains/Subdomains/intrested_live_sub.txt -bulk
 echo -e "\e[36m          \_Final Intresting live subs count: \e[32m$(cat Subdomains/Subdomains/intrested_live_sub.txt  | tr '[:upper:]' '[:lower:]'| anew | grep -v " "|grep -v "@" | grep "\." | wc -l)\e[0m"
-cat Subdomains/Subdomains/Final_Subdomains.txt | grep -E "auth|corp|sign_in|sign_up|ldap|idp|dev|api|admin|login|signup|jira|gitlab|signin|ftp|ssh|git|jenkins|kibana|administration|administrator|administrative|grafana|vpn|jfroge" >> Subdomains/Subdomains/intrested_sub.txt
+cat Subdomains/Subdomains/Final_Subdomains.txt | grep -E "auth|corp|sign_in|sign_up|ldap|idp|dev|api|admin|login|signup|jira|gitlab|signin|ftp|ssh|git|jenkins|kibana|administration|administrator|administrative|grafana|vpn|jfroge" >> Subdomains/Subdomains/intrested_sub.txt; notify -rl 1 -silent -data Subdomains/Subdomains/intrested_sub.txt -bulk
 echo -e "\e[36m          \_Final Intresting subs count: \e[32m$(cat Subdomains/Subdomains/intrested_sub.txt  | tr '[:upper:]' '[:lower:]'| anew | grep -v " "|grep -v "@" | grep "\." | wc -l)\e[0m"
 echo -e "${GREEN} Starting Find Admin Panels: ${ENDCOLOR} "
-cat Subdomains/Subdomains/Final_Subdomains.txt | httpx  -sc -mc 200,302,401 -path `cat /root/admin.txt` >> Subdomains/Subdomains/adminpanel.txt &>/dev/null
+cat Subdomains/Subdomains/Final_Subdomains.txt | httpx  -sc -mc 200,302,401 -path `cat /root/admin.txt` >> Subdomains/Subdomains/adminpanel.txt &>/dev/null; notify -rl 1 -silent -data Subdomains/Subdomains/adminpanel.txt -bulk -id adminpanels
 echo -e "\e[36m          \_Final Admin Panel count: \e[32m$(cat Subdomains/Subdomains/adminpanel.txt  | tr '[:upper:]' '[:lower:]'| anew | grep -v " "|grep -v "@" | grep "\." | wc -l)\e[0m"
 sleep 10
 echo -e "${YELLOW} Finish Subdomain Enum ${ENDCOLOR}" 
 echo -e " Finish Subdomain Enum " | notify &>/dev/null
 
+echo -e "${GREEN} checking subdomaintakeover: ${ENDCOLOR}"
+subzy run --targets Subdomains/Subdomains/Final_Subdomains.txt --hide_fails | tee Subdomains/subtake/subtake.txt; notify -rl 1 -silent -data Subdomains/subtake/subtake.txt -bulk -id subtakeover
+sleep 10
+echo -e " Finish Subdomain Enum " | notify &>/dev/null
+
 echo -e "${GREEN} Start Port Scan: ${ENDCOLOR}"
-naabu  -list Subdomains/Subdomains/Final_Subdomains.txt  -exclude-ports 80,443 -o Subdomains/nabuu/port.txt &>/dev/null
+naabu  -list Subdomains/Subdomains/Final_Subdomains.txt  -exclude-ports 80,443 -o Subdomains/nabuu/port.txt &>/dev/null; notify -rl 1 -silent -data Subdomains/nabuu/port.txt -bulk -id port-scan-completed
 echo -e "\e[36m            \_Final Ports count: \e[32m$(cat  Subdomains/nabuu/port.txt  | tr '[:upper:]' '[:lower:]'| anew | grep -v " "|grep -v "@" | grep "\." | wc -l)\e[0m"
 echo -e "${GREEN} Start Filter Port : ${ENDCOLOR}"
-cat Subdomains/nabuu/port.txt | httpx -o Subdomains/nabuu/liveport.txt &>/dev/null
+cat Subdomains/nabuu/port.txt | httpx -o Subdomains/nabuu/liveport.txt &>/dev/null; notify -rl 1 -silent -data Subdomains/nabuu/liveport.txt -bulk -id live-ports
 echo -e "\e[36m             \_Final Live Ports count: \e[32m$(cat  Subdomains/nabuu/liveport.txt  | tr '[:upper:]' '[:lower:]'| anew | grep -v " "|grep -v "@" | grep "\." | wc -l)\e[0m"
 echo  -e " ${GREEN} Start Filter Intresting Ports: ${ENDCOLOR}"
-cat Subdomains/nabuu/port.txt | grep -E ":8443|:8089|:8080|:81|:444|:4444|:3000|:5000|:555|:90001" >> Subdomains/nabuu/intersed_port.txt
+cat Subdomains/nabuu/port.txt | grep -E ":8443|:8089|:8080|:81|:444|:4444|:3000|:5000|:555|:90001" >> Subdomains/nabuu/intersed_port.txt; notify -rl 1 -silent -data Subdomains/nabuu/intersed_port.txt -bulk -id intresting-ports
 echo -e "\e[36m              \_Final Intresting Ports count: \e[32m$(cat  Subdomains/nabuu/intersed_port.txt  | tr '[:upper:]' '[:lower:]'| anew | grep -v " "|grep -v "@" | grep "\." | wc -l)\e[0m"
-cat Subdomains/nabuu/liveport.txt | grep -E ":8443|:8089|:8080|:81|:444|:4444|:3000|:5000|:555|:90001" >> Subdomains/nabuu/intersed_liveport.txt
+cat Subdomains/nabuu/liveport.txt | grep -E ":8443|:8089|:8080|:81|:444|:4444|:3000|:5000|:555|:90001" >> Subdomains/nabuu/intersed_liveport.txt; notify -rl 1 -silent -data Subdomains/nabuu/intersed_liveport.txt -bulk -id live-intrested-ports
 echo -e "\e[36m               \_Final Intresting Live Ports count: \e[32m$(cat  Subdomains/nabuu/intersed_liveport.txt  | tr '[:upper:]' '[:lower:]'| anew | grep -v " "|grep -v "@" | grep "\." | wc -l)\e[0m"
 echo -e "${GREEN} Starting Find Admin Panels: ${ENDCOLOR}"
-cat Subdomains/nabuu/port.txt | httpx -sc -mc 200,302,401 -path `/root/admin.txt` >>  Subdomains/nabuu/adminpanel.txt &>/dev/null
+cat Subdomains/nabuu/port.txt | httpx -sc -mc 200,302,401 -path `/root/admin.txt` >>  Subdomains/nabuu/adminpanel.txt &>/dev/null; notify -rl 1 -silent -data Subdomains/nabuu/adminpanel.txt -bulk -id admin-panels-on-open-ports
 echo -e "\e[36m                \_Final Admin Panel count: \e[32m$(cat Subdomains/nabuu/adminpanel.txt  | tr '[:upper:]' '[:lower:]'| anew | grep -v " "|grep -v "@" | grep "\." | wc -l)\e[0m"
 sleep 10
 echo -e "${YELLOW} Finished Port Scan ${ENDCOLOR}" 
@@ -134,7 +140,7 @@ cat Subdomains/Wayback-file/Js-file.txt | sort -u | httpx -content-type | grep '
 echo -e "\e[36m      \_Final Filter Js file  count: \e[32m$(cat Subdomains/Wayback-file/javascript-200.txt  | tr '[:upper:]' '[:lower:]'| anew | grep -v " "|grep -v "@" | grep "\." | wc -l)\e[0m"
 httpx -l Subdomains/Wayback-file/javascript-200.txt -match-string "js.map" -o Subdomains/Wayback-file/Secrets/javascript-map.txt &>/dev/null
 echo -e "${GREEN}Starting Js Scan ${ENDCOLOR}"
-cat Subdomains/Wayback-file/javascript-200.txt  | nuclei -t /root/nuclei-templates/exposures/ -o Subdomains/Wayback-file/Secrets/nuclei-javascript.txt &>/dev/null
+cat Subdomains/Wayback-file/javascript-200.txt  | nuclei -t /root/nuclei-templates/exposures/ -o Subdomains/Wayback-file/Secrets/nuclei-javascript.txt &>/dev/null; notify -rl 1 -silent -data Subdomains/Wayback-file/Secrets/nuclei-javascript.txt -bulk -id nuclei-js-info-disclosure
 echo -e "\e[36m    \_Final Secret  count: \e[32m$(cat Subdomains/Wayback-file/Secrets/nuclei-javascript.txt  | tr '[:upper:]' '[:lower:]'| anew | grep -v " "|grep -v "@" | grep "\." | wc -l)\e[0m"
 
 #after collect key run these comannd on key nuclei -t $HOME/nuclei-templates/token-spray -var token=vt70wYM90ZixRqNPSqYC2FLokqpcZsYqvwc5NS04z6pIibNI63M814r
@@ -144,13 +150,13 @@ echo -e " Scan Js File Done " | notify &>/dev/null
 mkdir Subdomains/Nuclei/sub 
 mkdir Subdomains/Nuclei/port 
 echo -e "${GREEN} Starting Subdomain Vulnerability Scan: ${ENDCOLOR}"
-cat Subdomains/Subdomains/livesub.txt | nuclei -severity critical -t /root/nuclei-templates -o Subdomains/Nuclei/sub/critical.txt &>/dev/null
+cat Subdomains/Subdomains/livesub.txt | nuclei -severity critical -t /root/nuclei-templates -o Subdomains/Nuclei/sub/critical.txt &>/dev/null; notify -rl 1 -silent -data Subdomains/Nuclei/sub/critical.txt -bulk -id nuclei-critical-issues
 echo -e "\e[36m    \_Final Ciritcal Vuln  count: \e[32m$(cat Subdomains/Nuclei/sub/critical.txt  | tr '[:upper:]' '[:lower:]'| anew | grep -v " "|grep -v "@" | grep "\." | wc -l)\e[0m"
-cat Subdomains/Subdomains/livesub.txt | nuclei -severity high -t /root/nuclei-templates -o Subdomains/Nuclei/sub/high.txt &>/dev/null
+cat Subdomains/Subdomains/livesub.txt | nuclei -severity high -t /root/nuclei-templates -o Subdomains/Nuclei/sub/high.txt &>/dev/null; notify -rl 1 -silent -data Subdomains/Nuclei/sub/high.txt -bulk -id nuclei-high-issues
 echo -e "\e[36m    \_Final high Vuln  count: \e[32m$(cat Subdomains/Nuclei/sub/high.txt  | tr '[:upper:]' '[:lower:]'| anew | grep -v " "|grep -v "@" | grep "\." | wc -l)\e[0m"
-cat Subdomains/Subdomains/livesub.txt | nuclei -severity medium -t /root/nuclei-templates -o Subdomains/Nuclei/sub/meduim.txt &>/dev/null
+cat Subdomains/Subdomains/livesub.txt | nuclei -severity medium -t /root/nuclei-templates -o Subdomains/Nuclei/sub/meduim.txt &>/dev/null; notify -rl 1 -silent -data Subdomains/Nuclei/sub/meduim.txt -bulk -id nuclei-medium-issues
 echo -e "\e[36m    \_Final medium Vuln  count: \e[32m$(cat Subdomains/Nuclei/sub/meduim.txt  | tr '[:upper:]' '[:lower:]'| anew | grep -v " "|grep -v "@" | grep "\." | wc -l)\e[0m"
-cat Subdomains/Subdomains/livesub.txt | nuclei -severity low -t /root/nuclei-templates -o Subdomains/Nuclei/sub/low.txt &>/dev/null
+cat Subdomains/Subdomains/livesub.txt | nuclei -severity low -t /root/nuclei-templates -o Subdomains/Nuclei/sub/low.txt &>/dev/null; notify -rl 1 -silent -data Subdomains/Nuclei/sub/low.txt -bulk -id nuclei-low-issues
 echo -e "\e[36m    \_Final low Vuln  count: \e[32m$(cat Subdomains/Nuclei/sub/low.txt  | tr '[:upper:]' '[:lower:]'| anew | grep -v " "|grep -v "@" | grep "\." | wc -l)\e[0m"
 echo -e "${YELLOW} scan Sub_Vuln done ${ENDCOLOR} "
 echo -e " scan Sub_Vuln done  " | notify &>/dev/null
@@ -159,16 +165,16 @@ echo -e " scan Sub_Vuln done  " | notify &>/dev/null
 
 echo -e "${GREEN}Starting Ports vulnerability scan: ${ENDCOLOR}"
 
-cat Subdomains/nabuu/liveport.txt | nuclei -severity critical -t /root/nuclei-templates -o Subdomains/Nuclei/port/critical.txt &>/dev/null
+cat Subdomains/nabuu/liveport.txt | nuclei -severity critical -t /root/nuclei-templates -o Subdomains/Nuclei/port/critical.txt &>/dev/null; notify -rl 1 -silent -data Subdomains/Nuclei/port/critical.txt -bulk -id nuclei-critical-ports
 echo -e "\e[36m    \_Final Ciritcal Vuln  count: \e[32m$(cat Subdomains/nabuu/liveport.txt  | tr '[:upper:]' '[:lower:]'| anew | grep -v " "|grep -v "@" | grep "\." | wc -l)\e[0m"
 
-cat Subdomains/nabuu/liveport.txt | nuclei -severity high -t /root/nuclei-templates -o Subdomains/Nuclei/port/high.txt &>/dev/null
+cat Subdomains/nabuu/liveport.txt | nuclei -severity high -t /root/nuclei-templates -o Subdomains/Nuclei/port/high.txt &>/dev/null; notify -rl 1 -silent -data Subdomains/Nuclei/port/high.txt -bulk -id nuclei-high-ports
 echo -e "\e[36m    \_Final high Vuln  count: \e[32m$(cat Subdomains/Nuclei/port/high.txt  | tr '[:upper:]' '[:lower:]'| anew | grep -v " "|grep -v "@" | grep "\." | wc -l)\e[0m"
 
-cat Subdomains/nabuu/liveport.txt | nuclei -severity medium -t /root/nuclei-templates -o Subdomains/Nuclei/port/meduim.txt &>/dev/null
+cat Subdomains/nabuu/liveport.txt | nuclei -severity medium -t /root/nuclei-templates -o Subdomains/Nuclei/port/meduim.txt &>/dev/null; notify -rl 1 -silent -data Subdomains/Nuclei/port/meduim.txt -bulk -id nuclei-medium-ports
 echo -e "\e[36m    \_Final medium Vuln  count: \e[32m$(cat Subdomains/Nuclei/port/meduim.txt  | tr '[:upper:]' '[:lower:]'| anew | grep -v " "|grep -v "@" | grep "\." | wc -l)\e[0m"
 
-cat Subdomains/nabuu/liveport.txt | nuclei -severity low -t /root/nuclei-templates -o Subdomains/Nuclei/port/low.txt &>/dev/null
+cat Subdomains/nabuu/liveport.txt | nuclei -severity low -t /root/nuclei-templates -o Subdomains/Nuclei/port/low.txt &>/dev/null; notify -rl 1 -silent -data Subdomains/Nuclei/port/low.txt -bulk -id nuclei-low-ports
 echo -e "\e[36m    \_Final low Vuln  count: \e[32m$(cat Subdomains/Nuclei/port/low.txt  | tr '[:upper:]' '[:lower:]'| anew | grep -v " "|grep -v "@" | grep "\." | wc -l)\e[0m"
 
 echo "${YELLOW} scan Sub_port_Vuln done ${ENDCOLOR} "
@@ -185,4 +191,4 @@ echo -e "\e[36m    \_Final Parameter  count: \e[32m$(cat Subdomains/Subdomains/p
 echo "${YELLOW} Parameter Discovery Done${ENDCOLOR} "
 echo -e " Parameter Discovery Done " | notify &>/dev/null
 
-echo -e "Finished all Recon , Hope find ${RED}P1${ENDCOLOR} Bugs.  Happy Hunting 😊 "
+echo -e "Finished all Recon , Hope find ${RED}P1${ENDCOLOR} Bugs.  Happy Hunting 😊 " | notify &>/dev/null
