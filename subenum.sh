@@ -36,7 +36,7 @@ echo $target | assetfinder -subs-only| tee new-$target/$target-assetfinder.txt
 echo -e "\e[1;34m [+] Enumerating Subdomain from the subfinder \e[0m"
 subfinder -d $target | tee new-$target/$target-subfinder.txt
 echo -e "\e[1;34m [+] Enumerating Subdomain from the amass \e[0m"
-amass enum -passive -d $target | tee new-$target/$target-amass.txt
+amass enum -passive -norecursive -noalts -d $target | tee new-$target/$target-amass.txt
 echo -e "\e[1;34m [+] Enumerating Subdomain from the sublist3r \e[0m"
 python3 /Users/sushantdhopat/Desktop/Sublist3r/sublist3r.py -d $target -o new-$target/$target-sublist.txt
 #echo -e "\e[1;34m [+] Enumerating Subdomain from the censys \e[0m"
@@ -52,18 +52,3 @@ rm new-$target/$target-assetfinder.txt new-$target/$target-subfinder.txt new-$ta
  
 cat new-$target/allsub-$target.txt | sort -u | tee new-$target/allsortedsub-$target.txt
 rm new-$target/allsub-$target.txt
-
-echo -e "\e[1;34m [+] Running shuffledns  for resolve host \e[0m"
-shuffledns -d $target -list new-$target/allsortedsub-$target.txt -r $resolver | tee new-$target/$target-resolved.txt
-
-echo -e "\e[1;34m [+] Gathering IP address of resolved subdomain \e[0m"
-bash /Users/sushantdhopat/Desktop/dtoip/dtoip.sh new-$target/$target-resolved.txt new-$target/ips.txt
-
-echo -e "\e[1;34m [+] Running Httpx for live host \e[0m"
-cat new-$target/allsortedsub-$target.txt | httpx -silent | tee new-$target/validsubdomain-$target.txt
-
-echo -e "\e[1;34m [+] Total Founded subdomains \e[0m"
-cat new-$target/allsortedsub-$target.txt | wc -w
-echo -e "\e[1;34m [+] Total Founded valid subdomains \e[0m"
-cat new-$target/validsubdomain-$target.txt | wc -w
-echo -e "[+] Finished all recon see your outpute generated on \e[1;34m new-$target \e[0m dir"
